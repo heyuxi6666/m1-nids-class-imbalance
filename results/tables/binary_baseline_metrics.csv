@@ -1,0 +1,2 @@
+model,task,accuracy,macro_f1,balanced_accuracy,attack_precision,attack_recall,normal_recall,roc_auc,average_precision
+Logistic Regression,Binary,0.8096730311422047,0.7957386608658139,0.7913454811469017,0.7535040339122111,0.9724477190505603,0.6102432432432432,0.9556235753754285,0.9661102725652112

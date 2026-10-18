@@ -1,0 +1,11 @@
+True Class,Predicted Class,Count
+Normal,Fuzzers,11442
+Exploits,Backdoor,2447
+DoS,Backdoor,2391
+Normal,Analysis,1584
+Fuzzers,Backdoor,807
+DoS,Exploits,585
+Normal,Exploits,556
+Exploits,DoS,480
+Generic,Exploits,453
+Exploits,Fuzzers,415

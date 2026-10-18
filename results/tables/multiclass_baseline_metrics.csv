@@ -1,0 +1,2 @@
+model,task,accuracy,macro_f1,weighted_f1,balanced_accuracy
+Logistic Regression,Multiclass,0.6983068551717436,0.3359518918995776,0.7060894450768832,0.3841908523417909
