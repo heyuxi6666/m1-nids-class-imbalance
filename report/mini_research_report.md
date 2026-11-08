@@ -1,12 +1,16 @@
 # Investigating Class Imbalance Handling Techniques for Machine Learning-Based Network Intrusion Detection
 
+**Yuxi He**  
+Postgraduate Cyber Security student  
+The University of Queensland
+
 ## Abstract
 
 Class imbalance remains a significant challenge in machine learning-based network intrusion detection, particularly for identifying rare attack categories. This study investigates four imbalance-handling techniques using the UNSW-NB15 dataset: class weighting, random oversampling, random undersampling, and SMOTENC. Logistic Regression and Random Forest are employed as baseline classifiers, with imbalance-handling experiments focusing on Random Forest.
 
-Five-fold Stratified Group Cross-Validation is conducted to reduce overlap between identical feature patterns across training and validation subsets. Experimental results show that class weighting achieves the highest mean Macro-F1 (0.6041) and Balanced Accuracy (0.6585), compared with 0.5616 and 0.5416 for the unweighted Random Forest baseline.
+Five-fold Stratified Group Cross-Validation is conducted to reduce overlap between identical feature patterns across training and validation subsets. Class weighting achieves the highest mean Balanced Accuracy (0.6585, compared with 0.5416 for the unweighted Random Forest baseline) and is higher than every other method in all five folds. Its mean Macro-F1 (0.6041, SD 0.0124) is also the highest, but its margin over random undersampling (0.5967, SD 0.0162) is small and within fold-to-fold variation.
 
-On the official test set, class weighting improves Macro-F1 from 0.4585 to 0.5010 and substantially increases recall for minority attack categories, including Backdoor and Worms. However, these improvements are accompanied by reduced overall accuracy and substantial false positives for certain categories.
+On the official test set, class weighting improves Macro-F1 from 0.4585 to 0.5010 and substantially increases recall for minority attack categories, including Backdoor (0.0892 to 0.5763) and Worms. However, these improvements are accompanied by reduced overall accuracy and substantial false positives: Backdoor precision is only 0.0502. The official test set had also been inspected during earlier baseline experiments, which limits how strictly the test results can be read as an untouched evaluation.
 
 Further analysis identifies duplicated feature patterns, conflicting labels, and train-test feature overlap. The findings highlight the importance of balancing minority-class detection performance, precision, and evaluation reliability in network intrusion detection research.
 
@@ -51,25 +55,29 @@ Macro-F1 and Balanced Accuracy guide model selection, supplemented by Accuracy a
 
 The selected class-weighted Random Forest is retrained on the full training partition and evaluated on the official test set. A separate analysis of test records without matching training feature patterns examines sensitivity to test-set composition.
 
+Model selection among the imbalance-handling methods used only cross-validation on the training partition. However, the official test set had already been used to evaluate the Logistic Regression and Random Forest baselines before the imbalance experiments, so it was not completely untouched when the final model was evaluated.
+
 <div style="page-break-before: always;"></div>
 
 ## 3. Results
 
 ### 3.1 Cross-Validation Performance
 
-Table 1 summarises the mean performance across five grouped cross-validation folds.
+Table 1 summarises performance across five grouped cross-validation folds. Fold-level values are printed in notebook 04; the standard deviation (SD) across folds was saved for Macro-F1 only.
 
-**Table 1. Five-fold cross-validation results.**
+**Table 1. Five-fold cross-validation results (mean across folds).**
 
-| Method | Macro-F1 | Balanced Accuracy |
-|--------|----------|-------------------|
-| Baseline RF | 0.5616 | 0.5416 |
-| Class Weight | **0.6041** | **0.6585** |
-| Random Oversampling | 0.5883 | 0.6170 |
-| Random Undersampling | 0.5967 | 0.6019 |
-| SMOTENC | 0.5694 | 0.5991 |
+| Method | Macro-F1 (mean) | Macro-F1 SD | Balanced Accuracy (mean) |
+|--------|-----------------|-------------|--------------------------|
+| Baseline RF | 0.5616 | 0.0130 | 0.5416 |
+| Class Weight | **0.6041** | 0.0124 | **0.6585** |
+| Random Oversampling | 0.5883 | 0.0096 | 0.6170 |
+| Random Undersampling | 0.5967 | 0.0162 | 0.6019 |
+| SMOTENC | 0.5694 | 0.0086 | 0.5991 |
 
-Class weighting achieved the highest mean Macro-F1 and Balanced Accuracy, improving upon the baseline by 0.0425 and 0.1169, respectively.
+The clearest result is in Balanced Accuracy. Class weighting improved on the baseline by 0.1168 and on the next-best method (random oversampling) by about 0.04, and it had the highest Balanced Accuracy in every one of the five folds.
+
+The Macro-F1 picture is less clear. Class weighting had the highest mean Macro-F1, 0.0425 above the baseline, but only about 0.0075 above random undersampling. That margin is smaller than either method's fold SD, and class weighting had the higher Macro-F1 in only three of the five folds. On an earlier single grouped validation split, random undersampling was slightly ahead (0.6060 vs 0.6034). No statistical significance test was performed, so these results do not show that class weighting is superior on Macro-F1.
 
 ### 3.2 Official Test Set Performance
 
@@ -97,17 +105,17 @@ These differences suggest sensitivity to test-set composition but do not establi
 
 ## 4. Discussion and Limitations
 
-Class weighting achieved the strongest cross-validation performance but revealed important trade-offs on the official test set. Although minority-class recall improved, overall Accuracy decreased, and false positives remained substantial. The weighted model produced 6,351 false-positive Backdoor predictions and misclassified 11,442 Normal records as Fuzzers. Backdoor precision was only 0.0502, highlighting the potential burden of false alarms in practical intrusion detection.
+Class weighting gave the clearest cross-validation gain in Balanced Accuracy, while its Macro-F1 advantage over random undersampling was within fold-to-fold variation. It also revealed important trade-offs on the official test set. Although minority-class recall improved, overall Accuracy decreased, and false positives remained substantial. The weighted model produced 6,351 false-positive Backdoor predictions and misclassified 11,442 Normal records as Fuzzers. Backdoor precision was only 0.0502, highlighting the potential burden of false alarms in practical intrusion detection.
 
 Data quality also complicates evaluation. UNSW-NB15 contains duplicated feature patterns and conflicting labels for identical feature inputs. Grouped cross-validation prevents identical patterns from appearing across training-validation boundaries, but cannot eliminate other dependencies. Furthermore, 10.37% of official test records share feature patterns with the training set. Performance differences on the non-overlapping subset may reflect changes in data composition rather than the direct effect of overlap.
 
-Several limitations remain. Experiments were restricted to one dataset, with only 44 Worms records in the official test set. Extensive hyperparameter optimisation, external validation, and statistical significance testing were not conducted. Additionally, the official test set had been inspected during earlier baseline experiments and was therefore not completely untouched before final model evaluation.
+Several limitations remain. Experiments were restricted to one dataset and one random seed, with only 44 Worms records in the official test set. Extensive hyperparameter optimisation, external validation, repeated cross-validation, and statistical significance testing were not conducted, so small differences between methods, such as the Macro-F1 gap between class weighting and random undersampling, cannot be resolved. Additionally, the official test set had been used to evaluate the baseline models during earlier experiments and was therefore not completely untouched before final model evaluation.
 
-Consequently, the results support class weighting under the evaluated conditions but do not establish its universal superiority. Future work should investigate external datasets and methods that improve minority-class recall while controlling false positives.
+Consequently, the results support class weighting for improving Balanced Accuracy under the evaluated conditions, but they do not establish that it is statistically or universally superior. Future work should investigate external datasets and methods that improve minority-class recall while controlling false positives.
 
 ## 5. Conclusion
 
-This study compared four class imbalance-handling techniques for Random Forest-based network intrusion detection using UNSW-NB15. Class weighting achieved the highest mean Macro-F1 (0.6041) and Balanced Accuracy (0.6585) under five-fold grouped cross-validation.
+This study compared four class imbalance-handling techniques for Random Forest-based network intrusion detection using UNSW-NB15. Under five-fold grouped cross-validation, class weighting achieved the highest mean Balanced Accuracy (0.6585), consistently across folds. Its highest mean Macro-F1 (0.6041) was not clearly separated from random undersampling (0.5967).
 
 On the official test set, class weighting improved Macro-F1 from 0.4585 to 0.5010 and Balanced Accuracy from 0.4828 to 0.5871, with substantial recall gains for rare attacks such as Backdoor and Worms. However, overall accuracy declined, and false positives remained problematic.
 

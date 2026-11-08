@@ -1,5 +1,10 @@
 # Machine Learning-Based Network Intrusion Detection under Class Imbalance
 
+**Author:** Yuxi He, Postgraduate Cyber Security student, The University of Queensland
+
+**Research report:** [report/mini_research_report.pdf](report/mini_research_report.pdf) (source: [report/mini_research_report.md](report/mini_research_report.md))  
+**Notebooks:** [01 data understanding](notebooks/01_data_understanding.ipynb) · [02 binary baseline](notebooks/02_binary_baseline.ipynb) · [03 multiclass baselines](notebooks/03_multiclass_baseline.ipynb) · [04 imbalance experiments](notebooks/04_imbalance_experiments.ipynb) · [05 results analysis](notebooks/05_results_analysis.ipynb)
+
 ## 1. Project Overview
 
 This project investigates the impact of class imbalance on machine learning-based network intrusion detection using the UNSW-NB15 dataset.
@@ -139,17 +144,21 @@ These analyses help identify potential evaluation biases and limitations associa
 
 Five-fold Stratified Group Cross-Validation was conducted to compare the unweighted Random Forest baseline with four class imbalance-handling techniques.
 
-| Method | Mean Macro-F1 | Mean Balanced Accuracy |
-|--------|---------------|------------------------|
-| Baseline Random Forest | 0.5616 | 0.5416 |
-| Class Weight | **0.6041** | **0.6585** |
-| Random Oversampling | 0.5883 | 0.6170 |
-| Random Undersampling | 0.5967 | 0.6019 |
-| SMOTENC | 0.5694 | 0.5991 |
+| Method | Mean Macro-F1 | Macro-F1 SD | Mean Balanced Accuracy |
+|--------|---------------|-------------|------------------------|
+| Baseline Random Forest | 0.5616 | 0.0130 | 0.5416 |
+| Class Weight | **0.6041** | 0.0124 | **0.6585** |
+| Random Oversampling | 0.5883 | 0.0096 | 0.6170 |
+| Random Undersampling | 0.5967 | 0.0162 | 0.6019 |
+| SMOTENC | 0.5694 | 0.0086 | 0.5991 |
 
-Class Weight achieved the highest mean Macro-F1 and Balanced Accuracy among the evaluated methods.
+SD is the standard deviation across the five folds; it was saved for Macro-F1 only. Fold-level values are printed in notebook 04.
 
-Compared with the unweighted Random Forest, class weighting increased mean Macro-F1 by 0.0425 and mean Balanced Accuracy by 0.1169.
+Compared with the unweighted Random Forest, class weighting increased mean Balanced Accuracy by 0.1168 and mean Macro-F1 by 0.0425.
+
+The Balanced Accuracy result is the clearer one. Class weighting had the highest Balanced Accuracy of all methods in every one of the five folds.
+
+The Macro-F1 ranking is not clear-cut. Class weighting's mean Macro-F1 is only about 0.0075 above random undersampling, which is less than either method's fold SD, and class weighting was higher in only three of the five folds. On the earlier single grouped validation split, random undersampling was slightly ahead (0.6060 vs 0.6034). No statistical significance test was performed.
 
 However, these results represent performance on the UNSW-NB15 training partition under grouped cross-validation and should not be interpreted as final test performance.
 
@@ -232,8 +241,7 @@ The project is organised as follows:
     m1-nids-class-imbalance/
     |
     |-- data/
-    |   |-- raw/
-    |   |-- processed/
+    |   |-- raw/                  (UNSW-NB15 CSV files; downloaded separately, not tracked by Git)
     |
     |-- notebooks/
     |   |-- 01_data_understanding.ipynb
@@ -243,11 +251,12 @@ The project is organised as follows:
     |   |-- 05_results_analysis.ipynb
     |
     |-- results/
-    |   |-- figures/
-    |   |-- tables/
+    |   |-- figures/              (PNG figures written by the notebooks)
+    |   |-- tables/               (CSV results written by the notebooks)
     |
-    |-- src/
     |-- report/
+    |   |-- mini_research_report.md
+    |   |-- mini_research_report.pdf
     |
     |-- README.md
     |-- requirements.txt
@@ -304,7 +313,13 @@ The notebooks should be executed in the following order:
 
 Select the project virtual environment as the Jupyter kernel before execution.
 
-Within each notebook, execute cells sequentially because later cells may depend on variables created by earlier cells.
+Run each notebook from a fresh kernel ("Restart Kernel and Run All Cells"). Notebooks 01 to 03 can run in any order. Notebook 04 must run before notebook 05, because notebook 05 reads the CSV files that notebooks 03 and 04 save.
+
+The notebooks can also be executed from the command line, from the `notebooks/` directory:
+
+    jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=-1 01_data_understanding.ipynb
+
+Repeat this command for notebooks 02 to 05, in order. The cross-validation in notebook 04 is the slowest step: on a 28-core Windows machine (Python 3.11.9) notebook 04 took about 18 minutes, notebook 03 about 1 minute and the others under 1 minute.
 
 ### 6.5 Reproducibility Considerations
 
@@ -319,6 +334,8 @@ Model selection among imbalance-handling methods was primarily based on grouped 
 However, the official test set was also examined during earlier baseline experiments. This prior inspection is acknowledged as a limitation when interpreting the final test results.
 
 A supplementary non-overlapping test subset is used to examine the sensitivity of the final evaluation to repeated feature patterns.
+
+Re-running all five notebooks from fresh kernels in this environment regenerated every CSV table and PNG figure in `results/` byte-for-byte identical to the committed versions.
 
 The dependency versions are recorded in requirements.txt. However, exact results may vary across software versions, computing environments, and parallel execution settings.
 
@@ -361,6 +378,10 @@ Although grouped cross-validation prevents identical feature patterns from appea
 Furthermore, the official training and testing partitions contain overlapping input feature patterns.
 
 A supplementary non-overlapping test evaluation was conducted to investigate this issue. However, differences between the two evaluation sets may also reflect changes in class distributions.
+
+The official test set was used to evaluate the Logistic Regression and Random Forest baselines (notebooks 02 and 03) before the imbalance experiments. Model selection used only grouped cross-validation on the training partition, but the test set was not completely untouched when the final model was evaluated.
+
+Each method was run with one random seed (42), with no repeated cross-validation or significance testing. Small differences, such as the Macro-F1 gap between class weighting and random undersampling, therefore cannot be resolved.
 
 ### 7.4 Precision-Recall Trade-offs
 
